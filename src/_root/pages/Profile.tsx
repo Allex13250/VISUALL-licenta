@@ -6,7 +6,6 @@ import {
   useParams,
   useLocation,
 } from "react-router-dom";
-import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui";
 import { LikedPosts } from "@/_root/pages";

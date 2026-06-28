@@ -1,4 +1,4 @@
-import { ID, Query } from "appwrite";
+import { ID, Query, Permission, Role } from "appwrite";
 
 import { appwriteConfig, account, databases, storage, avatars } from "./config";
 import { IUpdatePost, INewPost, INewUser, IUpdateUser } from "@/types";
@@ -6,6 +6,26 @@ import { IUpdatePost, INewPost, INewUser, IUpdateUser } from "@/types";
 // ============================================================
 // AUTH
 // ============================================================
+
+function buildFallbackUserProfile(account: any) {
+  const baseName = account?.name || "User";
+  const username = String(baseName).toLowerCase().replace(/\s+/g, "").slice(0, 20) || "user";
+
+  return {
+    $id: account?.$id,
+    accountId: account?.$id,
+    name: account?.name || "User",
+    email: account?.email || "",
+    username,
+    imageUrl: "",
+    bio: "",
+    followers: [],
+    following: [],
+    posts: [],
+    liked: [],
+    save: [],
+  };
+}
 
 // ============================== SIGN UP
 export async function createUserAccount(user: INewUser) {
@@ -17,11 +37,11 @@ export async function createUserAccount(user: INewUser) {
       user.name
     );
 
-    if (!newAccount) throw Error;
+    if (!newAccount) throw new Error("Unable to create the Appwrite account.");
 
-    const avatarUrl = avatars.getInitials(user.name);
+    const avatarUrl = avatars.getInitials(user.name).toString();
 
-    const newUser = await saveUserToDB({
+    const savedUser = await saveUserToDB({
       accountId: newAccount.$id,
       name: newAccount.name,
       email: newAccount.email,
@@ -29,9 +49,9 @@ export async function createUserAccount(user: INewUser) {
       imageUrl: avatarUrl,
     });
 
-    return newUser;
+    return savedUser || buildFallbackUserProfile(newAccount);
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return error;
   }
 }
@@ -41,20 +61,36 @@ export async function saveUserToDB(user: {
   accountId: string;
   email: string;
   name: string;
-  imageUrl: URL;
+  imageUrl: string;
   username?: string;
 }) {
   try {
+    const profilePayload = {
+      ...user,
+      bio: "",
+      followers: [],
+      following: [],
+      posts: [],
+    };
+
+    const permissions = [
+      Permission.read(Role.user(user.accountId)),
+      Permission.update(Role.user(user.accountId)),
+      Permission.delete(Role.user(user.accountId)),
+    ];
+
     const newUser = await databases.createDocument(
       appwriteConfig.databaseId,
       appwriteConfig.userCollectionId,
       ID.unique(),
-      user
+      profilePayload,
+      permissions
     );
 
     return newUser;
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    return null;
   }
 }
 
@@ -93,13 +129,19 @@ export async function getCurrentUser() {
       [Query.equal("accountId", currentAccount.$id)]
     );
 
-    if (!currentUser) throw Error;
+    if (!currentUser || currentUser.documents.length === 0) {
+      return buildFallbackUserProfile(currentAccount);
+    }
 
     return currentUser.documents[0];
   } catch (error) {
     console.log(error);
     return null;
   }
+}
+
+export async function fetchCurrentUser(userId: string) {
+  return getUserById(userId);
 }
 
 // ============================== SIGN OUT
@@ -547,19 +589,16 @@ export async function updateUser(user: IUpdateUser) {
 
 
 // ============================== GET USERS FOLLOW/UNFOLLOW
-export async function followUser(userId: string, followersArray: string[]) {
+export async function followUser(userId: string, userIdToFollow: string) {
   try {
-    // Check if the user is already following
-    const isFollowing = followersArray.includes(userId);
+    const currentUser = await getUserById(userId);
 
-    let updatedFollowersArray;
+    if (!currentUser) throw new Error("User not found");
 
-    if (isFollowing) {
-      // Unfollow the user
-      updatedFollowersArray = followersArray.filter(follower => follower !== userId);
-    } else {
-      // Follow the user
-      updatedFollowersArray = [...followersArray, userId];
+    const following = Array.isArray(currentUser.following) ? currentUser.following : [];
+
+    if (following.includes(userIdToFollow)) {
+      return currentUser;
     }
 
     const updatedUser = await databases.updateDocument(
@@ -567,7 +606,7 @@ export async function followUser(userId: string, followersArray: string[]) {
       appwriteConfig.userCollectionId,
       userId,
       {
-        followers: updatedFollowersArray,
+        following: [...following, userIdToFollow],
       }
     );
 
@@ -576,6 +615,34 @@ export async function followUser(userId: string, followersArray: string[]) {
     return updatedUser;
   } catch (error) {
     console.log(error);
-    return null; // Or handle the error accordingly
+    return null;
+  }
+}
+
+export async function unfollowUser(userId: string, userIdToUnfollow: string) {
+  try {
+    const currentUser = await getUserById(userId);
+
+    if (!currentUser) throw new Error("User not found");
+
+    const following = Array.isArray(currentUser.following) ? currentUser.following : [];
+
+    const updatedFollowing = following.filter((followingId: string) => followingId !== userIdToUnfollow);
+
+    const updatedUser = await databases.updateDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.userCollectionId,
+      userId,
+      {
+        following: updatedFollowing,
+      }
+    );
+
+    if (!updatedUser) throw new Error("Failed to update user document");
+
+    return updatedUser;
+  } catch (error) {
+    console.log(error);
+    return null;
   }
 }

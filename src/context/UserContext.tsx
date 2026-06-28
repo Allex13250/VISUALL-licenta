@@ -1,5 +1,5 @@
 import React, { useState, useContext, createContext, ReactNode } from 'react';
-import { followUser, unfollowUser, fetchCurrentUser } from '@/api'; // Import your API functions
+import { followUser, unfollowUser, fetchCurrentUser } from '@/lib/appwrite/api';
 
 // Define the types for UserContext
 interface IUser {
@@ -44,7 +44,19 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     if (currentUser) {
       await followUser(currentUser.id, userId);
       const updatedUser = await fetchCurrentUser(currentUser.id);
-      setCurrentUser(updatedUser);
+      const normalizedUser = updatedUser
+        ? {
+            id: updatedUser.$id,
+            name: updatedUser.name,
+            username: updatedUser.username,
+            bio: updatedUser.bio,
+            imageUrl: updatedUser.imageUrl,
+            followers: updatedUser.followers ?? [],
+            following: updatedUser.following ?? [],
+            posts: updatedUser.posts ?? [],
+          }
+        : null;
+      setCurrentUser(normalizedUser);
     }
   };
 
@@ -52,7 +64,19 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     if (currentUser) {
       await unfollowUser(currentUser.id, userId);
       const updatedUser = await fetchCurrentUser(currentUser.id);
-      setCurrentUser(updatedUser);
+      const normalizedUser = updatedUser
+        ? {
+            id: updatedUser.$id,
+            name: updatedUser.name,
+            username: updatedUser.username,
+            bio: updatedUser.bio,
+            imageUrl: updatedUser.imageUrl,
+            followers: updatedUser.followers ?? [],
+            following: updatedUser.following ?? [],
+            posts: updatedUser.posts ?? [],
+          }
+        : null;
+      setCurrentUser(normalizedUser);
     }
   };
 
