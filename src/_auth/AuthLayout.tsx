@@ -1,6 +1,7 @@
 import { Outlet, Navigate } from "react-router-dom";
 
 import { useUserContext } from "@/context/AuthContext";
+import ThemeToggle from "@/components/shared/ThemeToggle";
 
 export default function AuthLayout() {
   const { isAuthenticated } = useUserContext();
@@ -11,7 +12,10 @@ export default function AuthLayout() {
         <Navigate to="/" />
       ) : (
         <>
-          <section className="flex flex-1 justify-center items-center flex-col py-10">
+          <section className="flex flex-1 justify-center items-center flex-col py-10 relative">
+            <div className="absolute top-4 right-4">
+              <ThemeToggle />
+            </div>
             <Outlet />
           </section>
 

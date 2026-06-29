@@ -5,12 +5,31 @@
 @tailwind utilities;
 
 @layer base {
+  /* Light theme colors */
+  :root[data-theme="light"],
+  :root:not([data-theme]) {
+    --text: 0.25 0.03 240;
+    --background: 0.98 0.001 0;
+    --primary: 0.6 0.2 250;
+    --secondary: 0.7 0.15 200;
+    --accent: 0.55 0.25 30;
+  }
+
+  /* Dark theme colors */
+  :root[data-theme="dark"] {
+    --text: 0.95 0.005 0;
+    --background: 0.1 0.01 240;
+    --primary: 0.7 0.2 250;
+    --secondary: 0.8 0.15 200;
+    --accent: 0.65 0.25 30;
+  }
+
   * {
     @apply box-border list-none p-0 m-0 scroll-smooth;
   }
 
   body {
-    @apply bg-dark-1 text-white min-h-screen font-inter;
+    @apply bg-background text-text min-h-screen font-inter transition-colors duration-300;
   }
 }
 

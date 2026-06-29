@@ -20,6 +20,11 @@ module.exports = {
     },
     extend: {
       colors: {
+        'text': 'oklch(var(--text))',
+        'background': 'oklch(var(--background))',
+        'primary': 'oklch(var(--primary))',
+        'secondary': 'oklch(var(--secondary))',
+        'accent': 'oklch(var(--accent))',
         'primary-500': '#3D2BE2',
         'primary-600': '#68B3F4',
         'secondary-500': '#7EF3FE',

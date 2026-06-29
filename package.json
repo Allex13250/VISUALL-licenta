@@ -22,7 +22,6 @@
     "@tanstack/react-query-devtools": "^4.35.7",
     "appwrite": "^13.0.2",
     "attr-accept": "^2.2.2",
-    "caniuse-lite": "^1.0.30001627",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "eslint-config-prettier": "^9.0.0",
