@@ -23,6 +23,21 @@ interface IUserContext {
 // Create the UserContext with default values
 const UserContext = createContext<IUserContext | undefined>(undefined);
 
+const normalizeUser = (user: any): IUser | null => {
+  if (!user) return null;
+
+  return {
+    id: user.$id || user.id || "",
+    name: user.name || "",
+    username: user.username || "",
+    bio: user.bio || "",
+    imageUrl: user.imageUrl || "",
+    followers: user.followers ?? [],
+    following: user.following ?? [],
+    posts: user.posts ?? [],
+  };
+};
+
 // Custom hook to use the UserContext
 export const useUser = () => {
   const context = useContext(UserContext);
@@ -44,19 +59,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     if (currentUser) {
       await followUser(currentUser.id, userId);
       const updatedUser = await fetchCurrentUser(currentUser.id);
-      const normalizedUser = updatedUser
-        ? {
-            id: updatedUser.$id,
-            name: updatedUser.name,
-            username: updatedUser.username,
-            bio: updatedUser.bio,
-            imageUrl: updatedUser.imageUrl,
-            followers: updatedUser.followers ?? [],
-            following: updatedUser.following ?? [],
-            posts: updatedUser.posts ?? [],
-          }
-        : null;
-      setCurrentUser(normalizedUser);
+      setCurrentUser(normalizeUser(updatedUser));
     }
   };
 
@@ -64,19 +67,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     if (currentUser) {
       await unfollowUser(currentUser.id, userId);
       const updatedUser = await fetchCurrentUser(currentUser.id);
-      const normalizedUser = updatedUser
-        ? {
-            id: updatedUser.$id,
-            name: updatedUser.name,
-            username: updatedUser.username,
-            bio: updatedUser.bio,
-            imageUrl: updatedUser.imageUrl,
-            followers: updatedUser.followers ?? [],
-            following: updatedUser.following ?? [],
-            posts: updatedUser.posts ?? [],
-          }
-        : null;
-      setCurrentUser(normalizedUser);
+      setCurrentUser(normalizeUser(updatedUser));
     }
   };
 
