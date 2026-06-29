@@ -482,6 +482,7 @@ export async function getRecentPosts() {
     return posts;
   } catch (error) {
     console.log(error);
+    return { documents: [] };
   }
 }
 
@@ -509,6 +510,7 @@ export async function getUsers(limit?: number) {
     return users;
   } catch (error) {
     console.log(error);
+    return { documents: [] };
   }
 }
 
